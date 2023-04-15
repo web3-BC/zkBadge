@@ -106,13 +106,14 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
         emit InitBadge(convertUint256ToUint64(_requestId), _expireTimestamp, _query);
     }
 
-    function _beforeProofSubmit(uint64, /*requestId*/ uint256[] memory inputs, ICircuitValidator validator)
+    function _beforeProofSubmit(uint64, requestId, uint256[] memory inputs, ICircuitValidator validator)
         internal
         view
         override
     {
         address addr = GenesisUtils.int256ToAddress(inputs[validator.getChallengeInputIndex()]);
         require(_msgSender() == addr, "address in proof is not a sender address");
+        require(!proofs[addr][requestId], "proof can not be submitted more than once");
     }
 
     function _afterProofSubmit(uint64 requestId, uint256[] memory inputs, ICircuitValidator validator)
@@ -122,7 +123,6 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
         address prover = _msgSender();
         uint tokenId_ = uint256(requestId);
         require(tokenId_ <= _tokenId, "the given request id does not exist");
-        require(!proofs[prover][requestId], "proof can not be submitted more than once");
         _mint(prover, tokenId_, 1, "");
         emit MintBadge(tokenId_, prover);
         if (isLocked) emit Locked(tokenId_);
