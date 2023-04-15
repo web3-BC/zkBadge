@@ -1,0 +1,25 @@
+{
+    "@context": [
+      {
+        "@version": 1.1,
+        "@protected": true,
+        "id": "@id",
+        "type": "@type",
+        "ProofOfTwitterFollower": {
+          "@id": "https://raw.githubusercontent.com/web3-BC/zkBadge/main/schemas/twitter/proof-of-twitter-follower.jsonld#ProofOfTwitterFollower",
+          "@context": {
+            "@version": 1.1,
+            "@protected": true,
+            "id": "@id",
+            "type": "@type",
+            "vocab": "https://raw.githubusercontent.com/web3-BC/zkBadge/main/schemas/twitter/proof-of-twitter-follower-vocab.md#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "followerNumber": {
+              "@id": "vocab:followerNumber",
+              "@type": "xsd:integer"
+            }
+          }
+        }
+      }
+    ]
+  }
