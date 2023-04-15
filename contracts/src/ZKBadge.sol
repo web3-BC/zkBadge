@@ -12,11 +12,18 @@ import "./lib/GenesisUtils.sol";
 contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier {
     /* ========== STATE VARIABLES ========== */
 
+    struct Query {
+        uint256 schema;
+        uint256 claimPathKey;
+        uint256 operator;
+        uint256[] value;
+    }
+
     struct Reptation {
         uint64 requestId;
         address issuer;
         uint256 expireTimestamp;
-        ICircuitValidator.CircuitQuery query;
+        Query query;
     }
 
     using Strings for uint256;
@@ -88,7 +95,7 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier {
 
     function initBadge(
         ICircuitValidator _validator,
-        ICircuitValidator.CircuitQuery memory _query,
+        Query memory _query,
         uint256 _expireTimestamp,
         string memory _tokenURI
     ) public {
@@ -125,7 +132,7 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier {
 
     /* ========== EVENTS ========== */
 
-    event InitBadge(uint256 indexed _tokenId, uint256 _expireTimestamp, ICircuitValidator.CircuitQuery _query);
+    event InitBadge(uint256 indexed _tokenId, uint256 _expireTimestamp, Query _query);
 
     event MintBadge(uint256 indexed _tokenId, address indexed _to);
 }
