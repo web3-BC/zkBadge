@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/GenesisUtils.sol";
 import "../lib/SpongePoseidon.sol";
 import "../lib/Poseidon.sol";
 import "../interfaces/ICircuitValidator.sol";
 import "../interfaces/IZKPVerifier.sol";
 
-contract ZKPVerifier is IZKPVerifier, Ownable {
+contract ZKPVerifier is IZKPVerifier {
     // msg.sender-> ( requestID -> is proof given )
     mapping(address => mapping(uint64 => bool)) public proofs;
 
@@ -62,7 +61,7 @@ contract ZKPVerifier is IZKPVerifier, Ownable {
         uint256 claimPathKey,
         uint256 operator,
         uint256[] calldata value
-    ) public override onlyOwner returns (bool) {
+    ) public override returns (bool) {
         uint256 valueHash = SpongePoseidon.hash(value);
         // only merklized claims are supported (claimPathNotExists is false, slot index is set to 0 )
         uint256 queryHash = PoseidonUnit6L.poseidon(
@@ -89,7 +88,7 @@ contract ZKPVerifier is IZKPVerifier, Ownable {
         uint256 operator,
         uint256[] calldata value,
         uint256 queryHash
-    ) public override onlyOwner returns (bool) {
+    ) public override returns (bool) {
         if (requestValidators[requestId] == ICircuitValidator(address(0x00))) {
             _supportedRequests.push(requestId);
         }
