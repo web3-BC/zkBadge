@@ -106,7 +106,7 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
         emit InitBadge(convertUint256ToUint64(_requestId), _expireTimestamp, _query);
     }
 
-    function _beforeProofSubmit(uint64, requestId, uint256[] memory inputs, ICircuitValidator validator)
+    function _beforeProofSubmit(uint64 requestId, uint256[] memory inputs, ICircuitValidator validator)
         internal
         view
         override
