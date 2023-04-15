@@ -3,8 +3,8 @@
     "type": "object",
     "$metadata": {
       "uris": {
-        "jsonLdContext": "https://raw.githubusercontent.com/0xPolygonID/tutorial-examples/main/credential-schema/proof-of-dao-longevity.jsonld",
-        "jsonSchema": "https://raw.githubusercontent.com/0xPolygonID/tutorial-examples/main/credential-schema/proof-of-dao-longevity.json"
+        "jsonLdContext": "https://raw.githubusercontent.com/web3-BC/zkBadge/main/schemas/twitter/proof-of-twitter-follower.jsonld",
+        "jsonSchema": "https://raw.githubusercontent.com/web3-BC/zkBadge/main/schemas/twitter/proof-of-twitter-follower.json"
       }
     },
     "required": [
@@ -106,7 +106,7 @@
         "type": "object",
         "required": [
           "id",
-          "entryDate"
+          "followerNumber"
         ],
         "properties": {
           "id": {
@@ -114,7 +114,7 @@
             "type": "string",
             "format": "uri"
           },
-          "entryDate": {
+          "followerNumber": {
             "type": "integer"
           }
         }
