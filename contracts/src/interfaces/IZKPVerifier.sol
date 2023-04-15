@@ -1,16 +1,10 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+// SPDX-License-Identifier: GPL-3.0
 
-// Imports
-// ========================================================
+pragma solidity ^0.8.0;
+
 import "./ICircuitValidator.sol";
 
-// Interface
-// ========================================================
 interface IZKPVerifier {
-    /**
-     * @dev submitZKPResponse
-     */
     function submitZKPResponse(
         uint64 requestId,
         uint256[] memory inputs,
@@ -19,15 +13,26 @@ interface IZKPVerifier {
         uint256[2] memory c
     ) external returns (bool);
 
-    /**
-     * @dev setZKPRequest
-     */
-    function setZKPRequest(uint64 requestId, ICircuitValidator validator, ICircuitValidator.CircuitQuery memory query)
-        external
-        returns (bool);
+    function setZKPRequest(
+        uint64 requestId,
+        ICircuitValidator validator,
+        uint256 schema,
+        uint256 slotIndex,
+        uint256 operator,
+        uint256[] calldata value
+    ) external returns (bool);
 
-    /**
-     * @dev getZKPRequest
-     */
-    function getZKPRequest(uint64 requestId) external returns (ICircuitValidator.CircuitQuery memory);
+    function setZKPRequestRaw(
+        uint64 requestId,
+        ICircuitValidator validator,
+        uint256 schema,
+        uint256 slotIndex,
+        uint256 operator,
+        uint256[] calldata value,
+        uint256 queryHash
+    ) external returns (bool);
+
+    function getZKPRequest(
+        uint64 requestId
+    ) external returns (ICircuitValidator.CircuitQuery memory);
 }

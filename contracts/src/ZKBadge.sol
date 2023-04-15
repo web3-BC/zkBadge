@@ -3,7 +3,6 @@ pragma solidity ^0.8.18;
 
 /* ========== IMPORTS ========== */
 import "../lib/openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
-import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 import "./interfaces/IERC5192.sol";
 import "./interfaces/ICircuitValidator.sol";
@@ -95,7 +94,7 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier {
     ) public {
         // minted token id is equal to requestId
         uint256 _requestId = _tokenId + 1;
-        this.setZKPRequest(convertUint256ToUint64(_requestId), _validator, _query);
+        this.setZKPRequest(convertUint256ToUint64(_requestId), _validator, _query.schema, _query.claimPathKey, _query.operator, _query.value);
         _mint(address(this), _requestId, 1, "");
         _setURI(_requestId, _tokenURI);
         _tokenToReptation[_requestId] = Reptation({requestId: convertUint256ToUint64(_requestId), issuer: _msgSender(), expireTimestamp: _expireTimestamp, query: _query});
