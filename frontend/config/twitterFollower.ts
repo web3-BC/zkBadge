@@ -1,7 +1,7 @@
 const twitterFollowerContext =
   "https://raw.githubusercontent.com/web3-BC/zkBadge/main/schemas/proof-of-twitter-follower/proof-of-twitter-follower.jsonld";
 
-const deployedContractAddress = "0x44f53039FA2d6B2f397ad34aB5aff2c0828560B3";
+const deployedContractAddress = "0x2feC2760E3C520D8f0024998779DF9Af8fAFa4a4";
 
 export const qrTwitterProofRequestJson = {
   id: "7f38a193-0918-4a48-9fac-36adfdb8b542",

@@ -9,7 +9,7 @@ import {
 export default function Home() {
   return (
     <Box textAlign={"center"} p={4} height={"100vh"}>
-      <Typography variant="h2">Claim our zkBudges!</Typography>
+      <Typography variant="h2">Claim our zkBadges!</Typography>
 
       <Box display={"flex"} justifyContent={"center"} my={4}>
         <Box mr={5}>
