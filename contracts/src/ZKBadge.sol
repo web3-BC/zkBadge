@@ -2,18 +2,20 @@
 pragma solidity ^0.8.18;
 
 /* ========== IMPORTS ========== */
-import "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 import "./interfaces/IERC5192.sol";
 import "./interfaces/ICircuitValidator.sol";
+import "./verifiers/ZKPVerifier.sol";
+import "./lib/GenesisUtils.sol";
 
-contract ZKBadge is ERC721, IERC5192, Ownable {
+contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier {
     /* ========== STATE VARIABLES ========== */
 
     struct Reptation {
-        address verifier;
         uint64 requestId;
+        address issuer;
         uint256 expireTimestamp;
         ICircuitValidator.CircuitQuery query;
     }
@@ -21,11 +23,9 @@ contract ZKBadge is ERC721, IERC5192, Ownable {
     using Strings for uint256;
 
     bool private isLocked = true;
-    uint256 private _counter;
-
-    mapping(uint256 => string) private _tokenURIs;
-    mapping(address => uint256) private _ownedToken;
-    mapping(uint256 => Reptation[]) private _tokenToReptations;
+    uint256 private _tokenId;
+    uint64 constant MAX_UINT64 = 2**64 - 1;
+    mapping(uint256 => Reptation) private _tokenToReptation;
 
     error ErrLocked();
     error ErrNotFound();
@@ -37,15 +37,12 @@ contract ZKBadge is ERC721, IERC5192, Ownable {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor() ERC721("ZKBadge", "ZKB") {}
-    // MEMO: ERC1155の方が視覚的にわかりやすいかも？？
-    // 各プロジェクト(issuer)がsetZKPRequestと一緒に自分達のSBTを発行するイメージ
-    // その場合、コントラクトを一つにまとめた方が良さそう（expire期限をいつでも変更できるようになるし）
+    constructor() ERC1155("") {}
 
     /* ========== VIEW FUNCTIONS ========== */
 
     function totalSupply() public view returns (uint256) {
-        return _counter;
+        return _tokenId;
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
@@ -53,80 +50,83 @@ contract ZKBadge is ERC721, IERC5192, Ownable {
     }
 
     function locked(uint256 tokenId) external view returns (bool) {
-        if (!_exists(tokenId)) revert ErrNotFound();
+        if (tokenId > _tokenId) revert ErrNotFound();
         return isLocked;
     }
 
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        _requireMinted(tokenId);
-
-        string memory _tokenURI = _tokenURIs[tokenId];
-        string memory base = _baseURI();
-
-        // If there is no base URI, return the token URI.
-        if (bytes(base).length == 0) {
-            return _tokenURI;
-        }
-        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
-        if (bytes(_tokenURI).length > 0) {
-            return string(abi.encodePacked(base, _tokenURI));
-        }
-
-        return super.tokenURI(tokenId);
-    }
-
-    function getOwnedToken(address owner) public view returns (uint256) {
-        return _ownedToken[owner];
+    function tokenReptationData(uint256 id) public view returns (Reptation memory reptation) {
+        return _tokenToReptation[id];
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public override checkLock {
-        super.safeTransferFrom(from, to, tokenId, data);
+    function safeTransferFrom(address from, address to, uint256 tokenId, uint256 amount, bytes memory data)
+        public
+        override
+        checkLock
+    {
+        super.safeTransferFrom(from, to, tokenId, amount, data);
     }
 
-    function safeTransferFrom(address from, address to, uint256 tokenId) public override checkLock {
-        super.safeTransferFrom(from, to, tokenId);
-    }
-
-    function transferFrom(address from, address to, uint256 tokenId) public override checkLock {
-        super.transferFrom(from, to, tokenId);
-    }
-
-    function approve(address approved, uint256 tokenId) public override checkLock {
-        super.approve(approved, tokenId);
+    function safeBatchTransferFrom(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) public override checkLock {
+        super.safeBatchTransferFrom(from, to, ids, amounts, data);
     }
 
     function setApprovalForAll(address operator, bool approved) public override checkLock {
         super.setApprovalForAll(operator, approved);
     }
 
-    function mint(address to, string memory _tokenURI) public onlyOwner returns (uint256) {
-        uint256 tokenId = ++_counter;
-        _mint(to, tokenId);
-        _tokenURIs[tokenId] = _tokenURI;
-        _ownedToken[to] = tokenId;
-
-        if (isLocked) emit Locked(tokenId);
-
-        return tokenId;
+    function convertUint256ToUint64(uint256 value) public pure returns (uint64) {
+        require(value <= MAX_UINT64, "Value too large to fit in uint64");
+        return uint64(value);
     }
 
-    function addReptation(address owner, address verifier_, uint64 requestId_, uint256 expireTimestamp_, ICircuitValidator.CircuitQuery memory query_) external {
-        require(_msgSender() == verifier_, "the given verifier address does not match msg.sender");
-        uint256 _tokenId = getOwnedToken(owner);
-        Reptation memory newReptation = Reptation({
-            verifier: verifier_,
-            requestId: requestId_,
-            expireTimestamp: expireTimestamp_,
-            query: query_
-        });
-        _tokenToReptations[_tokenId].push(newReptation);
-        emit ReptationAdded(_tokenId, verifier_, requestId_, expireTimestamp_, query_);
+    function initBadge(
+        ICircuitValidator _validator,
+        ICircuitValidator.CircuitQuery memory _query,
+        uint256 _expireTimestamp,
+        string memory _tokenURI
+    ) public {
+        // minted token id is equal to requestId
+        uint256 _requestId = _tokenId + 1;
+        this.setZKPRequest(convertUint256ToUint64(_requestId), _validator, _query);
+        _mint(address(this), _requestId, 1, "");
+        _setURI(_requestId, _tokenURI);
+        _tokenToReptation[_requestId] = Reptation({requestId: convertUint256ToUint64(_requestId), issuer: _msgSender(), expireTimestamp: _expireTimestamp, query: _query});
+        emit InitBadge(convertUint256ToUint64(_requestId), _expireTimestamp, _query);
+    }
+
+    function _beforeProofSubmit(uint64, /*requestId*/ uint256[] memory inputs, ICircuitValidator validator)
+        internal
+        view
+        override
+    {
+        address addr = GenesisUtils.int256ToAddress(inputs[validator.getChallengeInputIndex()]);
+        require(_msgSender() == addr, "address in proof is not a sender address");
+    }
+
+    function _afterProofSubmit(uint64 requestId, uint256[] memory inputs, ICircuitValidator validator)
+        internal
+        override
+    {
+        address prover = _msgSender();
+        uint tokenId_ = uint256(requestId);
+        require(tokenId_ <= _tokenId, "the given request id does not exist");
+        require(!proofs[prover][requestId], "proof can not be submitted more than once");
+        _mint(prover, tokenId_, 1, "");
+        emit MintBadge(tokenId_, prover);
+        if (isLocked) emit Locked(tokenId_);
     }
 
     /* ========== EVENTS ========== */
 
-    event ReptationAdded(uint256 indexed _tokenId, address _verifier, uint64 _requestId, uint256 _expireTimestamp, ICircuitValidator.CircuitQuery  _query);
+    event InitBadge(uint256 indexed _tokenId, uint256 _expireTimestamp, ICircuitValidator.CircuitQuery _query);
 
+    event MintBadge(uint256 indexed _tokenId, address indexed _to);
 }
