@@ -97,7 +97,8 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
         string memory _tokenURI
     ) public {
         // minted token id is equal to requestId
-        uint256 _requestId = _tokenId + 1;
+        _tokenId++;
+        uint256 _requestId = _tokenId;
         this.setZKPRequest(convertUint256ToUint64(_requestId), _validator, _query.schema, _query.claimPathKey, _query.operator, _query.value);
         _mint(address(this), _requestId, 1, "");
         _setURI(_requestId, _tokenURI);
