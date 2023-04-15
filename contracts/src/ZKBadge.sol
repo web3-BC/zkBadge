@@ -3,13 +3,14 @@ pragma solidity ^0.8.18;
 
 /* ========== IMPORTS ========== */
 import "../lib/openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "../lib/openzeppelin-contracts/contracts/utils/Strings.sol";
 import "./interfaces/IERC5192.sol";
 import "./interfaces/ICircuitValidator.sol";
 import "./verifiers/ZKPVerifier.sol";
 import "./lib/GenesisUtils.sol";
 
-contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier {
+contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
     /* ========== STATE VARIABLES ========== */
 
     struct Query {
@@ -49,10 +50,6 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier {
 
     function totalSupply() public view returns (uint256) {
         return _tokenId;
-    }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IERC5192).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function locked(uint256 tokenId) external view returns (bool) {
@@ -128,6 +125,26 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier {
         _mint(prover, tokenId_, 1, "");
         emit MintBadge(tokenId_, prover);
         if (isLocked) emit Locked(tokenId_);
+    }
+
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"));
     }
 
     /* ========== EVENTS ========== */
