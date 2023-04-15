@@ -20,7 +20,7 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
         uint256[] value;
     }
 
-    struct Reptation {
+    struct Reputation {
         uint64 requestId;
         address issuer;
         uint256 expireTimestamp;
@@ -32,7 +32,7 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
     bool private isLocked = true;
     uint256 private _tokenId;
     uint64 constant MAX_UINT64 = 2**64 - 1;
-    mapping(uint256 => Reptation) private _tokenToReptation;
+    mapping(uint256 => Reputation) private _tokenToReputation;
 
     error ErrLocked();
     error ErrNotFound();
@@ -57,8 +57,8 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
         return isLocked;
     }
 
-    function tokenReptationData(uint256 id) public view returns (Reptation memory reptation) {
-        return _tokenToReptation[id];
+    function tokenReputationData(uint256 id) public view returns (Reputation memory reputation) {
+        return _tokenToReputation[id];
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -102,7 +102,7 @@ contract ZKBadge is ERC1155URIStorage, IERC5192, ZKPVerifier, IERC1155Receiver {
         this.setZKPRequest(convertUint256ToUint64(_requestId), _validator, _query.schema, _query.claimPathKey, _query.operator, _query.value);
         _mint(address(this), _requestId, 1, "");
         _setURI(_requestId, _tokenURI);
-        _tokenToReptation[_requestId] = Reptation({requestId: convertUint256ToUint64(_requestId), issuer: _msgSender(), expireTimestamp: _expireTimestamp, query: _query});
+        _tokenToReputation[_requestId] = Reputation({requestId: convertUint256ToUint64(_requestId), issuer: _msgSender(), expireTimestamp: _expireTimestamp, query: _query});
         emit InitBadge(convertUint256ToUint64(_requestId), _expireTimestamp, _query);
     }
 
